@@ -1,0 +1,3 @@
+(executable
+ (name test_install)
+ (libraries util))
