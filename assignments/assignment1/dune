@@ -1,0 +1,3 @@
+(executable
+ (name assignment1)
+ (libraries util))
