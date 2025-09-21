@@ -33,6 +33,13 @@ let population_init (member_count : int) (member_length : int) (rng_state : Rand
         members = Array.init member_count (fun _ -> genome_init member_length rng_state);
     }
 
+let copy_genome (g : genome_t) : genome_t =
+  {
+    length = g.length;
+    fitness = g.fitness;
+    string = Array.copy g.string;
+  }
+
 let genome_mutate(genome : genome_t) (mutation_rate : float) (rng_state : Rand.rng_state) : unit =
     for i = 0 to genome.length - 1 do
         if Rand.uniform rng_state < mutation_rate then
@@ -63,4 +70,63 @@ let genome_1P_crossover (genome1 : genome_t) (genome2 : genome_t) (rng_state : R
         fitness = get_fitness mutated_genotype_2;
         string = mutated_genotype_2;
     })
+
+let make_new_generation (curr_pop : population_t) (mutation_rate : float) (crossover_rate : float) (rng_state : Rand.rng_state) : population_t = 
+    let fitness_scores = Array.map (fun member -> member.fitness) curr_pop.members in
+    (* grab the min and sum, not sure why max was defined in the code given,
+       as it doesnt do anything, so i took it out of this implementation *)
+    let min_fitness, sum_fitness = 
+      Array.fold_left (fun (min_acc, sum_fitness_acc) score ->
+        (min min_acc score, sum_fitness_acc +. score)
+      ) (fitness_scores.(0), fitness_scores.(0)) fitness_scores
+    in
+    (* editing in place here rather than focusing on mutability is better, even tho
+       it is not the "OCaml way". this minimizes the scores, adds 1, and divides by 
+       the sum as given in the exmaple code*)
+    Array.iteri (fun i s -> fitness_scores.(i) <- (s -. min_fitness +. 1.) /. sum_fitness) fitness_scores ;
+    (* make it a cdf now *)
+    for i = 1 to Array.length fitness_scores - 1 do
+      fitness_scores.(i) <- fitness_scores.(i) +. fitness_scores.(i-1)
+    done;
+
+    (* lets go, closure time! dont need to pass extra stuff to this func bc it 
+       is all defined inside this function already*)
+    let select_parent () =
+      let target = Rand.uniform rng_state in
+      let rec find_index i =
+        if i >= Array.length fitness_scores then Array.length fitness_scores - 1
+        else if fitness_scores.(i) >= target then i
+        else find_index (i + 1)
+      in
+      curr_pop.members.(find_index 0)
+    in
+
+    let new_pop = {
+        size = curr_pop.size;
+        members = Array.make curr_pop.size {
+          length = 0;
+          fitness = 0.0;
+          string = [||];
+        }
+    } in
+
+    for i = 0 to curr_pop.size - 2 do
+      let child1 = copy_genome (select_parent ()) in
+      let child2 = copy_genome (select_parent ()) in
+
+      genome_mutate child1 mutation_rate rng_state;
+      genome_mutate child2 mutation_rate rng_state;
+
+      let child1, child2 =
+        if Rand.uniform rng_state < crossover_rate then
+          genome_1P_crossover child1 child2 rng_state
+        else
+          child1, child2
+      in
+
+      new_pop.members.(i) <- child1;
+      new_pop.members.(i+1) <- child2;
+    done ;
+
+    new_pop
 
