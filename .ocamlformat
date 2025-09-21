@@ -1,0 +1,12 @@
+version=0.27.0
+profile=default
+wrap-fun-args=false
+margin=80
+let-binding-indent=4
+function-indent=4
+match-indent=4
+type-decl-indent=4
+cases-exp-indent=4
+indent-after-in=4
+extension-indent=4
+stritem-extension-indent=4
