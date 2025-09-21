@@ -15,6 +15,9 @@ type population_t = {
 let get_fitness (genotype: bool array) : float =
     failwith "TODO: implement get_fitness on genome"
 
+let update_population_fitness (population : population_t) : unit = 
+    Array.iter (fun member -> member.fitness <- get_fitness member.string) population.members
+
 let print_genome (genome: genome_t) : unit = 
     Array.iter (fun bit -> print_string(if bit then "1" else "0")) genome.string ;
     print_string ("(" ^ string_of_float genome.fitness ^ ")")
@@ -130,3 +133,43 @@ let make_new_generation (curr_pop : population_t) (mutation_rate : float) (cross
 
     new_pop
 
+let decode_genome (genome : genome_t) (start_idx : int) (end_idx : int) (min_val : float) (max_val : float) : float =
+  let decimal_value = ref 0.0 in
+  let max_decimal_value = ref 0.0 in
+  let bit_count = ref 0 in
+  for bit_pos = end_idx downto start_idx do
+    if genome.string.(bit_pos) then
+      decimal_value := !decimal_value +. 2.0 ** float_of_int !bit_count;
+    max_decimal_value := !max_decimal_value +. 2.0 ** float_of_int !bit_count;
+    incr bit_count
+  done;
+  min_val +. (!decimal_value /. !max_decimal_value) *. (max_val -. min_val)
+
+let rosenbrock_fitness (genome : genome_t) : float =
+  (* Example: assume 2 variables for simplicity, each encoded with half the genome *)
+  let n = genome.length in
+  let var_len = n / 2 in
+  let x = decode_genome genome 0 (var_len - 1) (-2.0) 2.0 in
+  let y = decode_genome genome var_len (n - 1) (-2.0) 2.0 in
+  (* Rosenbrock function: f(x,y) = (1-x)^2 + 100*(y - x^2)^2 *)
+  (* and since wwe are trying to maximize, negate the value *)
+  -. ((1.0 -. x) ** 2. +. 100.0 *. (y -. x ** 2.) ** 2.)
+
+let half_ones_fitness (genome : genome_t) : float =
+  let one_count =
+    Array.fold_left (fun acc bit -> if bit then acc +. 1.0 else acc) 0.0 genome.string
+  in
+  let ratio = one_count /. float_of_int genome.length in
+  let distance = abs_float (0.5 -. ratio) in
+  -.distance
+
+let quarter_ones_fitness (genome : genome_t) : float =
+  let one_count =
+    Array.fold_left (fun acc bit -> if bit then acc +. 1.0 else acc) 0.0 genome.string
+  in
+  let ratio = one_count /. float_of_int genome.length in
+  let distance = abs_float (0.25 -. ratio) in
+  -.distance
+
+let max_ones_fitness (genome : genome_t) : float =
+  Array.fold_left (fun acc bit -> if bit then acc +. 1.0 else acc) 0.0 genome.string
