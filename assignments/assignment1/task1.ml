@@ -26,6 +26,10 @@ type population_t = { size : int; members : genome_t array }
 
 (* ------------------ fitness functions ------------------ *)
 
+let update_population_fitness_with (population : population_t)
+    (fitness_fn : genome_t -> float) : unit =
+    Array.iter (fun member -> member.fitness <- fitness_fn member) population.members
+
 (* calculate fitness based on how close the genome has half ones *)
 let half_ones_fitness (genome : genome_t) : float =
     let one_count =
