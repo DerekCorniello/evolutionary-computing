@@ -1,4 +1,17 @@
+; Task 1 contains no executables, but I have this to test:
 (executable
- (public_name assignment1)
+ (public_name assignment1-task1)
  (name assignment1)
+ (libraries util))
+
+; Task 2 - Max Ones
+(executable
+ (public_name assignment1-task2)
+ (name task2)
+ (libraries util))
+
+; Task 3 - Rosenbrock
+(executable
+ (public_name assignment1-task3)
+ (name task3)
  (libraries util))
