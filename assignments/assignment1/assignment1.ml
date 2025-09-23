@@ -192,7 +192,7 @@ let () =
                     in
                         ( new_pop,
                           Printf.sprintf
-                            "%.1f of population converged to fitness %.6f"
+                            "%.1f%% of population converged to fitness %.6f"
                             (ratio *. 100.0)
                             common_fitness,
                           generation )
@@ -216,7 +216,7 @@ let () =
           "Average fitness   : %.4f\n"
           (average_fitness final_population);
         Out.printf
-          "Convergence       : %.2f\n"
+          "Convergence       : %.2f%%\n"
           (same_fitness_ratio final_population *. 100.0);
         Out.printf "Actual execution time    : %.2f seconds\n" elapsed;
         Out.printf "%s\n" termination_reason;
