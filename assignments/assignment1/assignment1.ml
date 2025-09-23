@@ -56,6 +56,7 @@ let () =
         SGA.population_init population_size genome_length rng_state fitness_fn
     in
         (* ------------------ print header ------------------ *)
+        let start_time = Sys.time () in
         Printf.printf
           "%s  %d  %d  %g  %g\n"
           (fitness_name fitness_type)
@@ -174,8 +175,12 @@ let () =
         (* ------------------ final output ------------------ *)
         SGA.print_population final_population;
 
+        let end_time = Sys.time () in
+        let elapsed = end_time -. start_time in
+        
         Printf.printf "---- Final Stats ----\n";
         Printf.printf "Total generations : %d\n" generations;
         Printf.printf "Average fitness   : %.4f\n" (average_fitness final_population);
         Printf.printf "Convergence       : %.2f%%\n" ((same_fitness_ratio final_population) *. 100.0);
+        Printf.printf "Actual execution time    : %.2f seconds\n" elapsed;
         Printf.printf "%s\n" termination_reason
