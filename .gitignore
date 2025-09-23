@@ -34,6 +34,3 @@ setup.log
 
 # Local OPAM switch
 _opam/
-
-# For output files
-*.txt
