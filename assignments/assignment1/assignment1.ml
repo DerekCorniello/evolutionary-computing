@@ -72,6 +72,7 @@ let () =
         (* Replace dots with underscores *)
     in
         Out.set_both_output output_filename;
+        let _ = Out.open_output output_filename in
 
         Out.printf
           "%s  %d  %d  %g  %g\n"
@@ -218,4 +219,5 @@ let () =
           "Convergence       : %.2f\n"
           (same_fitness_ratio final_population *. 100.0);
         Out.printf "Actual execution time    : %.2f seconds\n" elapsed;
-        Out.printf "%s\n" termination_reason
+        Out.printf "%s\n" termination_reason;
+        Out.close_output ()

@@ -9,6 +9,7 @@ let table_size = 32
 let ndiv = 1 + (modulus - 1) / table_size
 let epsilon = 1.2e-7
 let max_val = 1.0 -. epsilon
+let default_seed = 1
 
 type rng_state = {
   mutable seed: int;
@@ -16,15 +17,37 @@ type rng_state = {
   mutable last: int;
 }
 
-(* create new rng with random seed *)
+(* create new rng deterministically with a default seed *)
 let create () : rng_state = 
   let rng = {
     seed = 0;
     table = Array.make table_size 0;
     last = 0;
   } in
+  rng.seed <- -default_seed;
+  rng.last <- 0;
+  rng
+
+(* create new rng with a specific deterministic seed *)
+let create_with_seed (seed:int) : rng_state =
+  let rng = {
+    seed = 0;
+    table = Array.make table_size 0;
+    last = 0;
+  } in
+  rng.seed <- -seed;
+  rng.last <- 0;
+  rng
+
+(* create new rng with a non-deterministic seed based on system randomness *)
+let create_random () : rng_state =
+  let rng = {
+    seed = 0;
+    table = Array.make table_size 0;
+    last = 0;
+  } in
   Random.self_init ();
-  let random_seed = Random.int 1000000 in
+  let random_seed = Random.int 1_000_000 in
   rng.seed <- -random_seed;
   rng.last <- 0;
   rng
