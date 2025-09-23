@@ -2,15 +2,9 @@ module SGA = Task1
 module Rand = Util.Rand
 module Out = Util.Output
 
-(* Define the fitness function type and name *)
 type fitness_type = MaxOnes
-
 let fitness_name = function MaxOnes -> "max-ones"
-
-(* Get the actual function from the variant *)
 let get_fitness_fn = function MaxOnes -> SGA.max_ones_fitness
-
-(* Main function *)
 let () =
     (* ------------------ predefined parameters ------------------ *)
     let population_size = 100 in
@@ -24,23 +18,17 @@ let () =
     let no_improve_threshold = 1e-4 in
     let significant_improve_threshold = 1e-3 in
     let high_fitness_ratio = 0.95 in
-    (* stop if 95% of population has same fitness *)
 
-    (* ------------------ initialize random state ------------------ *)
     let rng_state = Rand.create () in
-
-    (* Set up fitness function *)
     let fitness_type = MaxOnes in
     let fitness_fn = get_fitness_fn fitness_type in
 
-    (* ------------------ initialize population using a fitness function ------------------ *)
     let population =
         SGA.population_init population_size genome_length rng_state fitness_fn
     in
-    (* ------------------ print header ------------------ *)
-    let start_time = Sys.time () in
 
-    (* Create dynamic output filename *)
+    let start_time = Sys.time () in
+    (* create dynamic output filename *)
     let output_filename =
         Printf.sprintf
           "corniedj-%s-%d-%d-%g-%g"
@@ -50,7 +38,6 @@ let () =
           mutation_rate
           crossover_rate
         |> String.map (function '.' -> '_' | c -> c)
-        (* Replace dots with underscores *)
     in
         Out.set_both_output output_filename;
 
@@ -63,7 +50,6 @@ let () =
           crossover_rate;
 
         (* ------------------ helper functions ------------------ *)
-        (* calculate average fitness across all genomes in population *)
         let average_fitness (pop : SGA.population_t) =
             Array.fold_left
               (fun acc (g : SGA.genome_t) -> acc +. g.fitness)
@@ -173,10 +159,8 @@ let () =
                   else if champ_fit = float_of_int genome_length then
                     (new_pop, "found optimal solution", generation)
                   else
-                    (* continue evolving to next generation *)
                     evolve new_pop (generation + 1) avg_fit stagnant_generations
             in
-                (* start evolution from generation 1 *)
                 evolve population 1 (average_fitness population) 0
         in
 

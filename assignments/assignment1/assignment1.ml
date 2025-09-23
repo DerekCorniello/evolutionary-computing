@@ -56,22 +56,23 @@ let () =
     let population =
         SGA.population_init population_size genome_length rng_state fitness_fn
     in
-        (* ------------------ print header ------------------ *)
-        let start_time = Sys.time () in
-        
-        (* Create dynamic output filename *)
-        let output_filename = 
-          Printf.sprintf 
-            "corniedj-%s-%d-%d-%g-%g" 
-            (fitness_name fitness_type)
-            population_size
-            genome_length
-            mutation_rate
-            crossover_rate
-          |> String.map (function '.' -> '_' | c -> c) (* Replace dots with underscores *)
-        in
+    (* ------------------ print header ------------------ *)
+    let start_time = Sys.time () in
+
+    (* Create dynamic output filename *)
+    let output_filename =
+        Printf.sprintf
+          "corniedj-%s-%d-%d-%g-%g"
+          (fitness_name fitness_type)
+          population_size
+          genome_length
+          mutation_rate
+          crossover_rate
+        |> String.map (function '.' -> '_' | c -> c)
+        (* Replace dots with underscores *)
+    in
         Out.set_both_output output_filename;
-        
+
         Out.printf
           "%s  %d  %d  %g  %g\n"
           (fitness_name fitness_type)
@@ -163,22 +164,37 @@ let () =
                   (* check various termination conditions *)
                   if stagnant_generations >= convergence_window then
                     ( new_pop,
-                      Printf.sprintf "stagnated for %d generations" convergence_window,
+                      Printf.sprintf
+                        "stagnated for %d generations"
+                        convergence_window,
                       generation )
                   else if ratio >= high_fitness_ratio then
-                    let common_fitness = 
-                      let freq = Hashtbl.create new_pop.size in
-                      Array.iter (fun (g : SGA.genome_t) -> 
-                        let f = g.fitness in
-                        Hashtbl.replace freq f ((try Hashtbl.find freq f with Not_found -> 0) + 1)
-                      ) new_pop.members;
-                      fst (Hashtbl.fold (fun f count (max_f, max_count) -> 
-                        if count > max_count then (f, count) else (max_f, max_count)
-                      ) freq (0.0, 0))
+                    let common_fitness =
+                        let freq = Hashtbl.create new_pop.size in
+                            Array.iter
+                              (fun (g : SGA.genome_t) ->
+                                let f = g.fitness in
+                                    Hashtbl.replace
+                                      freq
+                                      f
+                                      ((try Hashtbl.find freq f
+                                        with Not_found -> 0)
+                                      + 1))
+                              new_pop.members;
+                            fst
+                              (Hashtbl.fold
+                                 (fun f count (max_f, max_count) ->
+                                   if count > max_count then (f, count)
+                                   else (max_f, max_count))
+                                 freq
+                                 (0.0, 0))
                     in
-                    ( new_pop,
-                      Printf.sprintf "%.1f%% of population converged to fitness %.6f" (ratio *. 100.0) common_fitness,
-                      generation )
+                        ( new_pop,
+                          Printf.sprintf
+                            "%.1f%% of population converged to fitness %.6f"
+                            (ratio *. 100.0)
+                            common_fitness,
+                          generation )
                   else
                     (* continue evolving to next generation *)
                     evolve new_pop (generation + 1) avg_fit stagnant_generations
@@ -192,10 +208,14 @@ let () =
 
         let end_time = Sys.time () in
         let elapsed = end_time -. start_time in
-        
+
         Out.printf "---- Final Stats ----\n";
         Out.printf "Total generations : %d\n" generations;
-        Out.printf "Average fitness   : %.4f\n" (average_fitness final_population);
-        Out.printf "Convergence       : %.2f%%\n" ((same_fitness_ratio final_population) *. 100.0);
+        Out.printf
+          "Average fitness   : %.4f\n"
+          (average_fitness final_population);
+        Out.printf
+          "Convergence       : %.2f%%\n"
+          (same_fitness_ratio final_population *. 100.0);
         Out.printf "Actual execution time    : %.2f seconds\n" elapsed;
         Out.printf "%s\n" termination_reason

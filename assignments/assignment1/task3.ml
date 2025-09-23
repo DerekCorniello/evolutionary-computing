@@ -2,15 +2,9 @@ module SGA = Task1
 module Rand = Util.Rand
 module Out = Util.Output
 
-(* Define the fitness function type and name *)
 type fitness_type = Rosenbrock
-
 let fitness_name = function Rosenbrock -> "rosenbrock"
-
-(* Get the actual function from the variant *)
 let get_fitness_fn = function Rosenbrock -> SGA.rosenbrock_fitness
-
-(* Helper function to decode genome to x,y coordinates *)
 let decode_genome (genome : SGA.genome_t) =
     let half = genome.SGA.length / 2 in
     let max_val = float_of_int ((1 lsl half) - 1) in
@@ -21,7 +15,7 @@ let decode_genome (genome : SGA.genome_t) =
               if genome.SGA.string.(start_idx + i) then
                 value := !value lor (1 lsl i)
             done;
-            (* Scale to range [-2.048, 2.048] which contains the minimum at (1,1) *)
+            (* scale to range [-2.048, 2.048] which contains the minimum at (1,1) *)
             (4.096 *. (float_of_int !value /. max_val)) -. 2.048
     in
 
@@ -29,32 +23,24 @@ let decode_genome (genome : SGA.genome_t) =
     let y = decode_slice half in
         (x, y)
 
-(* Main function *)
 let () =
     (* ------------------ predefined parameters ------------------ *)
     let population_size = 500 in
-    (* Larger population for more diversity *)
     let bits_per_variable = 20 in
-    (* 20 bits per variable (x and y) *)
     let genome_length = bits_per_variable * 2 in
-    (* For x and y variables *)
     let mutation_rate = 0.001 in
-    (* Lower mutation rate for more precise search *)
     let crossover_rate = 0.7 in
-    (* Higher crossover rate for better exploration *)
     let max_generations = 10_000 in
 
     (* convergence parameters *)
     let convergence_window = 500 in
     let no_improve_threshold = 1e-6 in
-    (* More sensitive threshold for Rosenbrock *)
     let significant_improve_threshold = 1e-5 in
     let high_fitness_ratio = 0.95 in
 
     (* ------------------ initialize random state ------------------ *)
     let rng_state = Rand.create () in
 
-    (* Set up fitness function *)
     let fitness_type = Rosenbrock in
     let fitness_fn = get_fitness_fn fitness_type in
 
@@ -66,7 +52,7 @@ let () =
     (* ------------------ print header ------------------ *)
     let start_time = Sys.time () in
 
-    (* Create dynamic output filename *)
+    (* create dynamic output filename *)
     let output_filename =
         Printf.sprintf
           "corniedj-%s-%d-%d-%.3f-%.2f"
@@ -76,7 +62,7 @@ let () =
           mutation_rate
           crossover_rate
         |> String.map (function '.' -> '_' | c -> c)
-        (* Replace dots with underscores *)
+        (* replace dots with underscores *)
     in
         Out.set_both_output output_filename;
 
@@ -88,7 +74,6 @@ let () =
           mutation_rate
           crossover_rate;
 
-        (* Track best solution *)
         let best_fitness = ref infinity in
         let best_individual = ref None in
 
@@ -158,7 +143,6 @@ let () =
                   let champ_fit = champion_fitness new_pop in
                   let ratio = same_fitness_ratio new_pop in
 
-                  (* Print progress *)
                   let best_x, best_y =
                       match !best_individual with
                       | Some g -> decode_genome g
@@ -174,7 +158,7 @@ let () =
                         best_y;
                       Out.print_string "" (* Force flush *);
 
-                      (* stagnation detection - for minimization, improvement is when fitness decreases *)
+                      (* stagnation detection: for minimization, improvement is when fitness decreases *)
                       let improvement = last_avg_fitness -. avg_fit in
                       let stagnant_generations =
                           if improvement <= no_improve_threshold then
@@ -220,14 +204,12 @@ let () =
                                 common_fitness,
                               generation )
                       else
-                        (* continue evolving to next generation *)
                         evolve
                           new_pop
                           (generation + 1)
                           avg_fit
                           stagnant_generations
             in
-            (* start evolution from generation 1 *)
             let initial_avg = average_fitness population in
                 evolve population 1 initial_avg 0
         in
