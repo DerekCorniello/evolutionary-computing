@@ -1,5 +1,6 @@
 module SGA = Task1
 module Rand = Util.Rand
+module Out = Util.Output
 
 (* define the fitness function types and names for easier printing,
    yes, I know it looks dumb to have all of these, but it makes the
@@ -57,7 +58,21 @@ let () =
     in
         (* ------------------ print header ------------------ *)
         let start_time = Sys.time () in
-        Printf.printf
+        
+        (* Create dynamic output filename *)
+        let output_filename = 
+          Printf.sprintf 
+            "corniedj-%s-%d-%d-%g-%g" 
+            (fitness_name fitness_type)
+            population_size
+            genome_length
+            mutation_rate
+            crossover_rate
+          |> String.map (function '.' -> '_' | c -> c) (* Replace dots with underscores *)
+        in
+        Out.set_both_output output_filename;
+        
+        Out.printf
           "%s  %d  %d  %g  %g\n"
           (fitness_name fitness_type)
           population_size
@@ -129,7 +144,7 @@ let () =
                   let champ_fit = champion_fitness new_pop in
                   let ratio = same_fitness_ratio new_pop in
 
-                  Printf.printf
+                  Out.printf
                     "%d %f %f %f\n"
                     generation
                     champ_fit
@@ -178,9 +193,9 @@ let () =
         let end_time = Sys.time () in
         let elapsed = end_time -. start_time in
         
-        Printf.printf "---- Final Stats ----\n";
-        Printf.printf "Total generations : %d\n" generations;
-        Printf.printf "Average fitness   : %.4f\n" (average_fitness final_population);
-        Printf.printf "Convergence       : %.2f%%\n" ((same_fitness_ratio final_population) *. 100.0);
-        Printf.printf "Actual execution time    : %.2f seconds\n" elapsed;
-        Printf.printf "%s\n" termination_reason
+        Out.printf "---- Final Stats ----\n";
+        Out.printf "Total generations : %d\n" generations;
+        Out.printf "Average fitness   : %.4f\n" (average_fitness final_population);
+        Out.printf "Convergence       : %.2f%%\n" ((same_fitness_ratio final_population) *. 100.0);
+        Out.printf "Actual execution time    : %.2f seconds\n" elapsed;
+        Out.printf "%s\n" termination_reason

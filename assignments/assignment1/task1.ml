@@ -14,6 +14,7 @@
 *)
 
 module Rand = Util.Rand
+module Output = Util.Output
 
 (* ------------------ types ------------------ *)
 type genome_t = {
@@ -90,15 +91,15 @@ let rosenbrock_fitness (genome : genome_t) : float =
 
 let print_genome (genome : genome_t) : unit =
     Array.iter
-      (fun bit -> print_string (if bit then "1" else "0"))
+      (fun bit -> Output.print_string (if bit then "1" else "0"))
       genome.string;
-    Printf.printf " (%.3f)" genome.fitness;
-    print_newline ()
+    Output.printf " (%.3f)" genome.fitness;
+    Output.print_newline ()
 
 let print_population (pop : population_t) : unit =
-    print_string ("population with size " ^ string_of_int pop.size ^ ":\n");
+    Output.print_string ("population with size " ^ string_of_int pop.size ^ ":\n");
     Array.iter print_genome pop.members;
-    print_newline ()
+    Output.print_newline ()
 
 (* ------------------ initialization ------------------ *)
 

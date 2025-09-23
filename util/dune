@@ -1,2 +1,3 @@
 (library
- (name util))
+ (name util)
+ (modules rand test_funcs output))
