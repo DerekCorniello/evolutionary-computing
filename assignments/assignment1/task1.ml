@@ -92,7 +92,8 @@ let print_genome (genome : genome_t) : unit =
     Array.iter
       (fun bit -> print_string (if bit then "1" else "0"))
       genome.string;
-    print_string ("(" ^ string_of_float genome.fitness ^ ")")
+    Printf.printf " (%.3f)" genome.fitness;
+    print_newline ()
 
 let print_population (pop : population_t) : unit =
     print_string ("population with size " ^ string_of_int pop.size ^ ":\n");
