@@ -180,62 +180,82 @@ let genome_1P_crossover (genome1 : genome_t) (genome2 : genome_t)
 let make_new_generation_with (curr_pop : population_t) (mutation_rate : float)
     (crossover_rate : float) (rng_state : Rand.rng_state)
     (fitness_fn : genome_t -> float) : population_t =
-    let fitness_scores =
-        Array.map (fun member -> member.fitness) curr_pop.members
-    in
-    (* find minimum and sum of fitness in one swoop B) *)
-    let min_fitness, sum_fitness =
-        Array.fold_left
-          (fun (min_acc, sum_acc) score ->
-            (min min_acc score, sum_acc +. score))
-          (fitness_scores.(0), fitness_scores.(0))
-          fitness_scores
-    in
-
-    (* scale and normalize fitness scores to create probability distribution *)
-    Array.iteri
-      (fun i s -> fitness_scores.(i) <- (s -. min_fitness +. 1.) /. sum_fitness)
-      fitness_scores;
-    for i = 1 to Array.length fitness_scores - 1 do
-      fitness_scores.(i) <- fitness_scores.(i) +. fitness_scores.(i - 1)
+    let pop_size = curr_pop.size in
+    let members = curr_pop.members in
+    
+    (* Precompute all random numbers needed for parent selection at once *)
+    let num_parents = if pop_size mod 2 = 0 then pop_size else pop_size + 1 in
+    let parent_targets = Array.init num_parents (fun _ -> Rand.uniform rng_state) in
+    
+    (* Single pass to compute min fitness and sum *)
+    let min_fitness = ref max_float in
+    let sum_fitness = ref 0.0 in
+    
+    Array.iter (fun m -> 
+      min_fitness := min !min_fitness m.fitness;
+      sum_fitness := !sum_fitness +. m.fitness
+    ) members;
+    
+    (* Build roulette wheel with a single pass *)
+    let roulette_wheel = Array.make pop_size 0.0 in
+    let min_fitness_val = !min_fitness in
+    let sum = ref 0.0 in
+    
+    for i = 0 to pop_size - 1 do
+      let adjusted = (members.(i).fitness -. min_fitness_val) +. 1.0 in
+      sum := !sum +. adjusted;
+      roulette_wheel.(i) <- !sum
     done;
-
-    (* oh yeah, closure time, since we got all of the params we need*)
-    let select_parent () =
-        let target = Rand.uniform rng_state in
-        let rec find_index i =
-            if i >= Array.length fitness_scores then
-              Array.length fitness_scores - 1
-            else if fitness_scores.(i) >= target then i
-            else find_index (i + 1)
-        in
-            curr_pop.members.(find_index 0)
-    in
-
-    let new_pop =
-        {
-          size = curr_pop.size;
-          members =
-            Array.make
-              curr_pop.size
-              { length = 0; fitness = 0.0; string = [||] };
-        }
-    in
-        for i = 0 to curr_pop.size - 2 do
-          let child1 = copy_genome (select_parent ()) in
-          let child2 = copy_genome (select_parent ()) in
-
-          genome_mutate child1 mutation_rate rng_state fitness_fn;
-          genome_mutate child2 mutation_rate rng_state fitness_fn;
-
-          let child1, child2 =
-              if Rand.uniform rng_state < crossover_rate then
-                genome_1P_crossover child1 child2 rng_state fitness_fn
-              else (child1, child2)
-          in
-
-          new_pop.members.(i) <- child1;
-          new_pop.members.(i + 1) <- child2
-        done;
-
-        new_pop
+    
+    (* Normalize in place *)
+    let inv_total = 1.0 /. !sum in
+    for i = 0 to pop_size - 1 do
+      roulette_wheel.(i) <- roulette_wheel.(i) *. inv_total
+    done;
+    
+    (* Precompute all parent indices at once *)
+    let parent_indices = Array.make num_parents 0 in
+    for p = 0 to num_parents - 1 do
+      let target = parent_targets.(p) in
+      let rec find_idx i =
+        if i >= pop_size then pop_size - 1
+        else if roulette_wheel.(i) >= target then i
+        else find_idx (i + 1)
+      in
+      parent_indices.(p) <- find_idx 0
+    done;
+    
+    (* Create new population *)
+    let new_members = Array.make pop_size { length = 0; fitness = 0.0; string = [||] } in
+    let parent_idx = ref 0 in
+    
+    for i = 0 to (pop_size lsr 1) - 1 do
+      let p1 = parent_indices.(!parent_idx) in
+      let p2 = parent_indices.(!parent_idx + 1) in
+      parent_idx := !parent_idx + 2;
+      
+      let child1 = copy_genome members.(p1) in
+      let child2 = copy_genome members.(p2) in
+      
+      if Rand.uniform rng_state < crossover_rate then
+        let c1, c2 = genome_1P_crossover child1 child2 rng_state fitness_fn in
+        new_members.(i * 2) <- c1;
+        new_members.(i * 2 + 1) <- c2
+      else (
+        new_members.(i * 2) <- child1;
+        new_members.(i * 2 + 1) <- child2
+      )
+    done;
+    
+    if pop_size land 1 = 1 then (
+      new_members.(pop_size - 1) <- copy_genome members.(parent_indices.(!parent_idx))
+    );
+    
+    (* Apply mutations in parallel if possible *)
+    Array.iteri (fun i m -> 
+      if Rand.uniform rng_state < mutation_rate then
+        genome_mutate m mutation_rate rng_state fitness_fn;
+      new_members.(i) <- m
+    ) new_members;
+    
+    { size = pop_size; members = new_members }

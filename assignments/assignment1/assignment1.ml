@@ -32,7 +32,7 @@ let () =
     (* ------------------ predefined parameters ------------------ *)
     let population_size = 1000 in
     let genome_length = 32 in
-    let mutation_rate = 0.001 in
+    let mutation_rate = 0.01 in
     let crossover_rate = 0.5 in
     let max_generations = 2_000_000 in
 
@@ -48,7 +48,7 @@ let () =
 
     (* NOTE: change this line to use different fitness functions:
         HalfOnes | QuarterOnes | MaxOnes | Rosenbrock *)
-    let fitness_type = MaxOnes in
+    let fitness_type = HalfOnes in
     let fitness_fn = get_fitness_fn fitness_type in
 
     (* ------------------ initialize population using a fitness function ------------------ *)
@@ -106,12 +106,12 @@ let () =
         in
 
         (* ------------------ evolution loop ------------------ *)
-        let final_population, termination_reason =
+        let final_population, termination_reason, generations =
             let rec evolve current_pop generation last_avg_fitness
                 stagnant_generations =
                 (* safety check to prevent infinite loops *)
                 if generation > max_generations then
-                  (current_pop, "reached maximum generation limit")
+                  (current_pop, "reached maximum generation limit", generation)
                 else
                   (* create next generation through selection, crossover, and mutation *)
                   let new_pop =
@@ -139,25 +139,30 @@ let () =
                   let improvement = avg_fit -. last_avg_fitness in
                   let stagnant_generations =
                       if improvement < no_improve_threshold then
-                        stagnant_generations
-                        + 1 (* count as stagnant generation *)
+                        stagnant_generations + 1
                       else if improvement > significant_improve_threshold then 0
-                        (* significant improvement, reset counter completely *)
                       else max 0 (stagnant_generations - 1)
-                      (* small improvement, reduce counter *)
                   in
 
                   (* check various termination conditions *)
                   if stagnant_generations >= convergence_window then
                     ( new_pop,
-                      Printf.sprintf
-                        "stagnated for %d generations"
-                        convergence_window )
+                      Printf.sprintf "stagnated for %d generations" convergence_window,
+                      generation )
                   else if ratio >= high_fitness_ratio then
+                    let common_fitness = 
+                      let freq = Hashtbl.create new_pop.size in
+                      Array.iter (fun (g : SGA.genome_t) -> 
+                        let f = g.fitness in
+                        Hashtbl.replace freq f ((try Hashtbl.find freq f with Not_found -> 0) + 1)
+                      ) new_pop.members;
+                      fst (Hashtbl.fold (fun f count (max_f, max_count) -> 
+                        if count > max_count then (f, count) else (max_f, max_count)
+                      ) freq (0.0, 0))
+                    in
                     ( new_pop,
-                      Printf.sprintf
-                        "%.1f%% of population converged to same fitness"
-                        (ratio *. 100.0) )
+                      Printf.sprintf "%.1f%% of population converged to fitness %.6f" (ratio *. 100.0) common_fitness,
+                      generation )
                   else
                     (* continue evolving to next generation *)
                     evolve new_pop (generation + 1) avg_fit stagnant_generations
@@ -170,6 +175,7 @@ let () =
         SGA.print_population final_population;
 
         Printf.printf "---- Final Stats ----\n";
-        Printf.printf "Average fitness : %.4f\n" (average_fitness final_population);
-        Printf.printf "Convergence     : %.2f%%\n" ((same_fitness_ratio final_population) *. 100.0);
+        Printf.printf "Total generations : %d\n" generations;
+        Printf.printf "Average fitness   : %.4f\n" (average_fitness final_population);
+        Printf.printf "Convergence       : %.2f%%\n" ((same_fitness_ratio final_population) *. 100.0);
         Printf.printf "%s\n" termination_reason
