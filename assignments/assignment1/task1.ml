@@ -86,8 +86,8 @@ let rosenbrock_fitness (genome : genome_t) : float =
     let var_len = n / 2 in
     let x = decode_genome genome 0 (var_len - 1) (-2.0) 2.0 in
     let y = decode_genome genome var_len (n - 1) (-2.0) 2.0 in
-        (* negate because genetic algorithm maximizes fitness *)
-        -.(((1.0 -. x) ** 2.) +. (100.0 *. ((y -. (x ** 2.)) ** 2.)))
+    (* Rosenbrock function - we want to minimize this *)
+    (1.0 -. x) ** 2.0 +. 100.0 *. ((y -. (x ** 2.0)) ** 2.0)
 
 (* ------------------ printing ------------------ *)
 
