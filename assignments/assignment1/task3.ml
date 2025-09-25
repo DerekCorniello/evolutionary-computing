@@ -67,7 +67,8 @@ let make_new_generation_with_uniform (pop : SGA.population_t)
     let pop_size = pop.SGA.size in
     let members = Array.copy pop.SGA.members in
 
-    (* sort by fitness (ascending order for minimization) *)
+    (* sort by fitness (ascending order for minimization)
+       this helps with elitism but doesn't change selection probabilities *)
     Array.sort (fun a b -> compare a.SGA.fitness b.SGA.fitness) members;
     let new_members = Array.make pop_size members.(0) in
 
@@ -78,8 +79,12 @@ let make_new_generation_with_uniform (pop : SGA.population_t)
         SGA.fitness = members.(0).SGA.fitness;
       };
 
-    (* create rest of the population using tournament selection and uniform crossover *)
+    (* create rest of the population using tournament selection and uniform crossover
+       tournament selection: for each parent, randomly select 3 individuals and 
+       pick the best (lowest fitness) *)
     for i = 1 to pop_size - 1 do
+      (* tournament_size = 3: balanced choice, provides selection pressure without losing diversity
+          determined through experimentation with different sizes for Rosenbrock optimization *)
       let tournament_size = 3 in
       let tournament =
           Array.init tournament_size (fun _ ->
@@ -100,7 +105,7 @@ let make_new_generation_with_uniform (pop : SGA.population_t)
             tournament
       in
 
-      (* get second parent from a new tournament to ensure we get a new parent *)
+      (* get second parent from a new tournament to ensure we get a different parent from the first one *)
       let tournament =
           Array.init tournament_size (fun _ ->
               let idx =
