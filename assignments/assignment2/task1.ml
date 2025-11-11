@@ -1,6 +1,7 @@
 (* code written by Derek Corniello *)
 
 open Assignment2
+module Out = Util.Output
 
 (*
 intermediate recombination, i chose it for continuous space, allows smooth blending
@@ -37,6 +38,21 @@ let () : unit =
     let fitness_fn = himmelblau_function in
     let population = population_init rng_state fitness_fn lambda in
 
+    (* create dynamic output filename *)
+    let output_filename =
+        Printf.sprintf
+          "corniedj-%s-%d-%d-%s-%d"
+          "himmelblau"
+          mu
+          lambda
+          (string_of_float sigma_x ^ "_" ^ string_of_float sigma_y |> String.map (function '.' -> '_' | c -> c))
+          0
+        |> String.map (function '.' -> '_' | c -> c)
+        (* replace dots with underscores *)
+    in
+        Out.set_both_output output_filename;
+        let _ = Out.open_output output_filename in
+
     (* output format as described in the assignment, complies with the grading rubric for producing output as defined *)
     let initial_avg =
         average_fitness_generic population.members (fun g -> g.fitness)
@@ -47,7 +63,7 @@ let () : unit =
     let initial_diversity =
         compute_diversity_generic population.members decode_genome
     in
-        Printf.printf
+        Out.printf
           "himmelblau ES %d %d %s %d %d %d %f %f %f\n"
           mu
           lambda
@@ -141,7 +157,7 @@ let () : unit =
                               new_pop.members
                               decode_genome
                         in
-                            Printf.printf
+                            Out.printf
                               "himmelblau ES %d %d %s %d %d %d %f %f %f\n"
                               mu
                               lambda
@@ -169,7 +185,7 @@ let () : unit =
         let final_diversity =
             compute_diversity_generic final_pop.members decode_genome
         in
-            Printf.printf
+            Out.printf
               "himmelblau ES %d %d %s %d %d %d %f %f %f\n"
               mu
               lambda
@@ -180,6 +196,8 @@ let () : unit =
               final_best
               final_avg
               final_diversity;
+
+            Out.close_output ();
 
             (* final population output *)
             Output.printf "Final population:\n";

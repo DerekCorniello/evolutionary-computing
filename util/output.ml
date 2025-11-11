@@ -55,6 +55,11 @@ let open_output filename =
       current_handle := Some oc;
       current_dest := FileHandle oc;
       oc
+  | FileOverwrite _ ->
+      let oc = open_out filename in
+      current_handle := Some oc;
+      current_dest := FileHandle oc;
+      oc
   | Both _ ->
       let oc = open_out_gen [Open_append; Open_creat; Open_wronly] 0o666 filename in
       current_handle := Some oc;

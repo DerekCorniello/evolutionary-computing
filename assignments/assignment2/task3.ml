@@ -13,11 +13,39 @@ type genome_t = {
 
 type population_t = { size : int; members : genome_t array }
 
+(* decode genome *)
+let decode_genome (genome : genome_t) =
+    let half = genome.length / 2 in
+    (* for 10 bits, max_val = 2^10 - 1 = 1023 *)
+    let max_val = float_of_int ((1 lsl half) - 1) in
+
+    let decode_slice start_idx =
+        let value = ref 0 in
+            (* read bits in big-endian order *)
+            for i = 0 to half - 1 do
+              if genome.string.(start_idx + i) then
+                value := !value lor (1 lsl (half - 1 - i))
+            done;
+            (* scale to range [-10.0, 10.0] as per assignment requirements *)
+            let min_val = -10.0 in
+            let max_val_range = 10.0 in
+            let range = max_val_range -. min_val in
+            (* 20.0 *)
+            let scaled = min_val +. (float_of_int !value *. range /. max_val) in
+                scaled
+    in
+
+    let x = decode_slice 0 in
+    let y = decode_slice half in
+        (x, y)
+
 let print_genome (genome : genome_t) : unit =
     Array.iter
       (fun bit -> Out.print_string (if bit then "1" else "0"))
       genome.string;
     Out.printf " (%.3f)" genome.fitness;
+    let x, y = decode_genome genome in
+    Out.printf " (%.3f, %.3f)" x y;
     Out.print_newline ()
 
 let print_population (pop : population_t) : unit =
@@ -92,32 +120,6 @@ let genome_1P_crossover (genome1 : genome_t) (genome2 : genome_t)
           |> fun g -> { g with fitness = fitness_fn g } )
 
 type fitness_type = Himmelblau
-
-(* decode genome *)
-let decode_genome (genome : genome_t) =
-    let half = genome.length / 2 in
-    (* for 10 bits, max_val = 2^10 - 1 = 1023 *)
-    let max_val = float_of_int ((1 lsl half) - 1) in
-
-    let decode_slice start_idx =
-        let value = ref 0 in
-            (* read bits in big-endian order *)
-            for i = 0 to half - 1 do
-              if genome.string.(start_idx + i) then
-                value := !value lor (1 lsl (half - 1 - i))
-            done;
-            (* scale to range [-10.0, 10.0] as per assignment requirements *)
-            let min_val = -10.0 in
-            let max_val_range = 10.0 in
-            let range = max_val_range -. min_val in
-            (* 20.0 *)
-            let scaled = min_val +. (float_of_int !value *. range /. max_val) in
-                scaled
-    in
-
-    let x = decode_slice 0 in
-    let y = decode_slice half in
-        (x, y)
 
 let himmelblau_fitness (genome : genome_t) : float =
     let x, y = decode_genome genome in
@@ -283,7 +285,7 @@ let () =
         |> String.map (function '.' -> '_' | c -> c)
         (* replace dots with underscores *)
     in
-        Out.set_output_overwrite output_filename;
+        Out.set_both_output output_filename;
         let _ = Out.open_output output_filename in
 
         (* output format, complies with the grading rubric for producing output as defined *)
