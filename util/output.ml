@@ -1,8 +1,9 @@
 (* Module for handling output redirection to both console and file *)
 
-type output_destination = 
-  | Console 
-  | File of string 
+type output_destination =
+  | Console
+  | File of string
+  | FileOverwrite of string
   | Both of string
   | FileHandle of out_channel
   | BothHandle of string * out_channel
@@ -17,12 +18,27 @@ let set_output = function
   | "console" -> current_dest := Console
   | filename -> current_dest := File (ensure_txt_extension filename)
 
+let set_output_overwrite = function
+  | "console" -> current_dest := Console
+  | filename -> current_dest := FileOverwrite (ensure_txt_extension filename)
+
 let set_both_output filename =
   current_dest := Both (ensure_txt_extension filename)
 
 let with_output_file filename f =
   let filename = ensure_txt_extension filename in
   let oc = open_out_gen [Open_append; Open_creat; Open_wronly] 0o666 filename in
+  try
+    let result = f oc in
+    close_out oc;
+    result
+  with e ->
+    close_out_noerr oc;
+    raise e
+
+let with_output_file_overwrite filename f =
+  let filename = ensure_txt_extension filename in
+  let oc = open_out filename in
   try
     let result = f oc in
     close_out oc;
@@ -64,6 +80,9 @@ let printf fmt =
   | File filename ->
       kprintf (fun s ->
         with_output_file filename (fun oc -> output_string oc s))
+  | FileOverwrite filename ->
+      kprintf (fun s ->
+        with_output_file_overwrite filename (fun oc -> output_string oc s))
   | FileHandle oc ->
       kprintf (fun s -> output_string oc s; flush oc)
   | Both filename ->
@@ -80,6 +99,8 @@ let print_string s =
   | Console -> Stdlib.print_string s
   | File filename ->
       with_output_file filename (fun oc -> output_string oc s)
+  | FileOverwrite filename ->
+      with_output_file_overwrite filename (fun oc -> output_string oc s)
   | FileHandle oc ->
       output_string oc s; flush oc
   | Both filename ->
@@ -94,6 +115,8 @@ let print_newline () =
   | Console -> Stdlib.print_newline ()
   | File filename ->
       with_output_file filename (fun oc -> output_string oc "\n")
+  | FileOverwrite filename ->
+      with_output_file_overwrite filename (fun oc -> output_string oc "\n")
   | FileHandle oc ->
       output_string oc "\n"; flush oc
   | Both filename ->

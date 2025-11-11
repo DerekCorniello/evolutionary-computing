@@ -1,6 +1,10 @@
-# volutionary Computing - Setup Instructions
+# Evolutionary Computing - Setup Instructions
 
 This repository contains assignments, a project, and a reusable utility library for the Evolutionary Computing course.
+
+## For Professors/Graders
+
+This document provides setup instructions for students, but includes guidance for grading. The course focuses on evolutionary algorithms (e.g., genetic algorithms for optimization), implemented in OCaml. Assignments build on each other, with tasks in each assignment folder (e.g., task1.ml for basic functions, task2.ml for max-ones problem, task3.ml for Rosenbrock function). Outputs are saved as .txt files for easy review, similar to C program logs. OCaml modules are like C header files, providing reusable functions.
 
 ## Repository Structure
 
@@ -13,9 +17,9 @@ evolutionary-computing/
 │  ├─ *.ml               # OCaml source files
 │  └─ *.mli              # Interface files (optional)
 ├─ assignments/           # Assignment executables
-│  └─ hwX/
+│  └─ assignmentX/
 │     ├─ dune
-│     └─ hwX.ml
+│     └─ taskX.ml
 │     ...
 ├─ project/               # Main project executable
 │  ├─ dune
@@ -32,9 +36,10 @@ evolutionary-computing/
 
 ## Requirements
 
-* OCaml 5.2.0 (recommended for this project)
+* OCaml (version unspecified, but 5.2.0 recommended)
 * Dune 3.x or later
-* OPAM (OCaml package manager)
+* OPAM (OCaml package manager, similar to apt or package managers in C environments)
+* gnu-plot (for plotting outputs)
 * Optional: `utop` for interactive testing
 
 ## Installation
@@ -81,7 +86,7 @@ opam switch create 5.2.0
 eval $(opam env)
 
 # Install required packages
-opam install dune utop
+opam install dune utop gnu-plot
 ```
 
 ### Step 3: Environment Setup
@@ -99,6 +104,9 @@ Or run `eval $(opam env)` manually each time you open a new terminal.
 From the root of the repository:
 
 ```bash
+# Ensure dependencies are all installed
+opam install . --deps-only
+
 # Build all executables and libraries
 dune build
 
@@ -108,35 +116,42 @@ dune clean
 
 This compiles the utility library, assignments, and project executables.
 
+### Viewing and Grading Assignments
+
+To run and inspect assignments:
+
+```bash
+# Build first
+dune build
+
+# Run a specific task (e.g., assignment 1, task 1)
+dune exec assignment1-task1
+
+# View output files (results saved like C printf logs)
+cat assignments/assignment1/corniedj-max-ones-1000-32-0_01-0_5.txt
+```
+
+Outputs include fitness values, generations, and parameters—review for correctness akin to debugging C code.
+
 ### Verify Installation
 
 To ensure everything is working correctly, run the test installation:
 
 ```bash
-dune exec assignments/test_install/test_install.exe
+dune exec test_install/test_install.exe
 ```
 
 ## Running Code
 
 ### Run Assignments
 
-Each assignment executable is located under `assignments/<hwX>/`. For example:
+Each assignment executable can be ran via:
 
 ```bash
-# Run homework 1
-dune exec assignments/hw1/hw1.exe
-
-# Run homework 2
-dune exec assignments/hw2/hw2.exe
+dune exec assignment1-task1
 ```
 
-### Run Project
-
-The main project executable:
-
-```bash
-dune exec project/main.exe
-```
+It is always useful to check the code first to ensure you run what you re looking for!
 
 ### Interactive Testing with utop
 
@@ -164,7 +179,7 @@ open Evolutionary_computing.Util;;
 
 ### Common Issues
 
-**Build errors after switching OCaml versions:**
+**Build errors after switching OCaml versions (similar to gcc compilation issues):**
 ```bash
 dune clean
 dune build
@@ -186,6 +201,8 @@ ocaml --version
 dune --version
 ```
 
+If dune build fails, check for missing dependencies like gcc errors in C—contact the student for setup help.
+
 ## Notes
 
 * The utility functions in `util/` are automatically available to all assignment and project executables through the dune build system
@@ -200,5 +217,6 @@ If you encounter any issues with the setup or have questions, please reach out a
 ## Additional Resources
 
 * [OCaml Documentation](https://ocaml.org/docs)
-* [Dune Documentation](https://dune.readthedocs.io/)
+* [Dune Documentation](https://dune.readthedocs.io/) (like make for C projects)
 * [OPAM Documentation](https://opam.ocaml.org/doc/)
+* [Transitioning from C to OCaml](https://ocaml.org/docs/transition-from-c) (for C programmers)

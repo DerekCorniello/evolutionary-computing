@@ -1,0 +1,22 @@
+(library
+ (name assignment2)
+ (libraries util)
+ (modules assignment2))
+
+(executable
+ (public_name assignment2-task1)
+ (name task1)
+ (libraries util assignment2)
+ (modules task1))
+
+(executable
+  (public_name assignment2-task2)
+  (name task2)
+  (libraries util assignment2)
+ (modules task2))
+
+(executable
+ (public_name assignment2-task3)
+ (name task3)
+ (libraries util assignment2)
+ (modules task3))

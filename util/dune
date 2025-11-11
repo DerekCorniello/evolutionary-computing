@@ -1,3 +1,4 @@
 (library
- (name util)
- (modules rand test_funcs output))
+  (name util)
+  (modules rand test_funcs output plot)
+  )
