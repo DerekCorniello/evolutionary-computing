@@ -1,0 +1,9 @@
+(executable
+ (public_name assignment3_sga)
+ (name assignment3_sga)
+ (libraries util))
+
+(executable
+ (public_name assignment3_es)
+ (name assignment3_es)
+ (libraries util))
